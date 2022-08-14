@@ -1,4 +1,5 @@
 import { DataTypes } from "sequelize";
+import { Joi } from "sequelize-joi";
 import PostgresSequelize from "../connector/postgres/index.js";
 
 const Model = PostgresSequelize.define("users", {
@@ -10,6 +11,15 @@ const Model = PostgresSequelize.define("users", {
   username: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      notEmpty: true,
+    },
+    schema: Joi.string().required().min(3).max(50),
+    get() {
+      const rawValue = this.getDataValue("username");
+
+      return rawValue ? rawValue.toUpperCase() : null;
+    },
   },
   password: {
     type: DataTypes.STRING,
@@ -32,20 +42,35 @@ Model.prototype.toJSON = function () {
   return values;
 };
 
-Model.sync().then(() => {
-  return Model.create({
-    username: "quang tri",
-    password: "123123",
-    age: 35,
-    wittCodeRocks: false,
-  })
-    .then((data) => {
-      console.log(data.toJSON());
-    })
-    .catch((error) => {
-      console.log(error);
+Model.sync()
+
+  // .then(() => {
+  //   return Model.create({
+  //     password: "123123",
+  //     username: "quan tri",
+  //     age: 35,
+  //     wittCodeRocks: false,
+  //   });
+  // })
+  // .then(() => {
+  //   return Model.findAll({ attributes: { exclude: ["createAt", "updateAt"] } });
+  // })
+  // .then((data) => {
+  //   data.forEach((el) => console.log(el.toJSON()));
+  // })
+  // .catch((error) => {
+  //   console.log(error);
+  // });
+
+  .then(() => {
+    return Model.findAll({
+      attributes: ["user_id", ["username", "myName"], ["age", "myAge"]],
+      order: [["user_id", "DESC"]],
     });
-});
+  })
+  .then((data) => {
+    data.forEach((x) => console.log(x.toJSON()));
+  });
 
 /**
  * trong hàm sync() có 2 object quan trọng
